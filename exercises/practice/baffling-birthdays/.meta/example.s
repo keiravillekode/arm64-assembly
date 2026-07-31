@@ -2,39 +2,32 @@
 .globl shared_birthday
 .globl estimate
 
-/* extern bool shared_birthday(const char **birthdates); */
+/* extern bool shared_birthday(size_t birthdates_count, const date_t *birthdates); */
 shared_birthday:
         stp     xzr, xzr, [sp, #-64]!   /* 32 halfwords on stack */
         stp     xzr, xzr, [sp, #16]
         stp     xzr, xzr, [sp, #32]
         stp     xzr, xzr, [sp, #48]
 
-        mov     x2, x0
+        add     x2, x1, x0, lsl #2      /* end of birthdates */
         mov     x0, xzr
-        mov     w1, #1
-        mov     w10, #10
-        mov     w15, 528                /* 11 * '0' */
+        mov     w3, #1
 
 .birthdate:
-        ldr     x9, [x2], #8
-        cbz     x9, .return
+        cmp     x1, x2
+        beq     .return
 
-        ldrb    w11, [x9, #8]
-        ldrb    w13, [x9, #9]
-        madd    w13, w10, w11, w13
-        sub     w13, w13, w15           /* day 1..31 */
+        ldrb    w12, [x1, #2]           /* month 1..12 */
+        ldrb    w13, [x1, #3]           /* day 1..31 */
+        add     x1, x1, #4
+
         lsl     w13, w13, #1
-
-        ldrb    w11, [x9, #5]
-        ldrb    w12, [x9, #6]
-        madd    w12, w10, w11, w12
-        sub     w12, w12, w15           /* month 1..12 */
-        lsl     w12, w1, w12            /* 1 << month */
+        lsl     w12, w3, w12            /* 1 << month */
 
         ldrh    w11, [sp, x13]
-        orr     w12, w11, w12
-        strh    w12, [sp, x13]
-        cmp     w11, w12
+        orr     w14, w11, w12
+        strh    w14, [sp, x13]
+        cmp     w11, w14
         bne     .birthdate
 
         mov     x0, #1
